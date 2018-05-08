@@ -40,7 +40,7 @@ class single_E:
 	def non_dim_capacative(self,parameters):
 		parameters[0]=(parameters[0]/self.I_0)/self.T_0*(self.a*self.E_0)
 		parameters[4]=parameters[4]*(2*math.pi*self.T_0)
-		self.sampling_freq=0.005*((float((2*math.pi)))/float(parameters[4]))
+		self.sampling_freq=0.05*((float((2*math.pi)))/float(parameters[4]))
 		self.E0_mean=self.E0_mean/self.E_0
 		self.k0_mean=self.k0_mean*self.T_0
 		self.Ru=self.Ru/self.E_0*self.T_0
