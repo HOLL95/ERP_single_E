@@ -6,7 +6,7 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 #import pints
 start=timer()
-time1=np.arange(0,20.05,0.05)
+
 
 end=timer()
 print start-end
