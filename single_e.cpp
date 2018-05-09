@@ -13,7 +13,7 @@
 #include </users/henney/Documents/pybind11/include/pybind11/pybind11.h>
 #include </users/henney/Documents/pybind11/include/pybind11/stl.h>
 namespace py = pybind11;
-
+//using namespace boost::python;
 
 
 
@@ -75,7 +75,7 @@ double e_t(param1& single_e_param, float t){
 double dEdt(param1& single_e_param,float t){
 	double E_dc;
 	double dedt;
-	t=t+0.5*single_e_param.dt;
+	//t=t+0.5*single_e_param.dt;
 	if (t < single_e_param.tr){
 		 E_dc=single_e_param.v;
 	}else {
@@ -85,8 +85,10 @@ double dEdt(param1& single_e_param,float t){
 	
 	return dedt;
 }
+
+
 double theta_1(param1& single_e_param,float t, double In1, float theta_0,double E){
-		const double Ereduced = E- single_e_param.Ru*In1;
+		const double Ereduced = E- (single_e_param.Ru*In1);
 		const double expval1 = Ereduced - single_e_param.E0_mean;
 		double exp11 = std::exp((1.0-single_e_param.alpha)*expval1);
 		double exp12 = std::exp(-single_e_param.alpha*expval1);
@@ -97,7 +99,7 @@ double theta_1(param1& single_e_param,float t, double In1, float theta_0,double 
 		return u1n1;
 }
 double dtheta_1(param1& single_e_param,float t, double In1, double theta_0, double E){
-		const double Ereduced = E - single_e_param.Ru*In1;
+		const double Ereduced = E - (single_e_param.Ru*In1);
 		const double expval1 = Ereduced - single_e_param.E0_mean;
 		double exp11 = std::exp((1.0-single_e_param.alpha)*expval1);
 		double exp12 = std::exp(-single_e_param.alpha*expval1);
@@ -115,8 +117,10 @@ double dtheta_1(param1& single_e_param,float t, double In1, double theta_0, doub
 		return du1n1;
 }
 double poly_er(param1& single_e_param, double E, double I_1){
-	double Er=E-single_e_param.Ru*I_1;
-	double Cdlp=single_e_param.Cdl*(1+single_e_param.CdlE*Er+single_e_param.CdlE2*pow(Er,2)+single_e_param.CdlE3*pow(Er,3));
+	double Er=E-(single_e_param.Ru*I_1);
+	double Er2=Er*Er;
+	double Er3=Er2*Er;
+	double Cdlp=single_e_param.Cdl*(1+(single_e_param.CdlE*Er)+(single_e_param.CdlE2*Er2)+(single_e_param.CdlE3*Er3));
 	return Cdlp;
 }
 double residual(param1& single_e_param, double In1, double In0,float t, double theta_0, double E, double dE) {
@@ -125,7 +129,7 @@ double residual(param1& single_e_param, double In1, double In0,float t, double t
 }
 double residual_gradient(param1& single_e_param, const double In1,float t, float theta_0, double E) {
 	        return single_e_param.gamma*dtheta_1(single_e_param, t, In1,theta_0,E)- single_e_param.dt*single_e_param.R*single_e_param.Ru - single_e_param.dt-poly_er(single_e_param, E,In1)*single_e_param.Ru;
-    
+     
 }
 
 
@@ -134,7 +138,7 @@ double residual_gradient(param1& single_e_param, const double In1,float t, float
 double newton_raphson(param1& single_e_param,double I_0,double theta_0, float t,double E, double dE){	
 	double newton_estimate=I_0-(residual(single_e_param, I_0, I_0, t, theta_0,E,dE)/residual_gradient(single_e_param, I_0, t, theta_0,E));
 	int i=0;
-	while(  i<100 ){ 
+	while(  i<100 ){ //abs((newton_estimate[i]-newton_estimate[i-1]))>10e-15 &&
 		i++;	
 		newton_estimate=I_0-(residual(single_e_param, newton_estimate,I_0, t, theta_0, E,dE)/residual_gradient(single_e_param, newton_estimate, t,theta_0, E));
 		
@@ -158,6 +162,8 @@ std::vector<double> non_linear_I_solver(param1& single_e_param){
 		E=e_t(single_e_param,t);
 		dE=dEdt(single_e_param,t);
 		I_matrix[i]=newton_raphson(single_e_param, I_matrix[i-1], theta_0,t,E,dE);
+		//CDL_matrix[i]=poly_er(single_e_param, E, I_matrix[i])*  ((dE)-single_e_param.Ru*(I_matrix[i]-I_matrix[i-1]));//
+		//std::cout<<residual(single_e_param, I_matrix[i], I_matrix[i-1], t, theta_0, E,dE)<<"\n";
 		theta_0=theta_1(single_e_param,t,I_matrix[i], theta_0,E);
 	}
 	return I_matrix;
@@ -217,7 +223,7 @@ std::vector<double> dispersion_solver(param1& single_e_param, std::vector<std::v
 
 
 
-py::object I_tot_solver(double Cdl, double CdlE1, double CdlE2, double CdlE3,double omega,double v,double alpha ,double E_start, double E_reverse, double delta_E, double Ru, double E0_mean=0, double k0_mean=0, double E0_sigma=0.1, double k0_sigma=1) {	
+py::object I_tot_solver(double Cdl, double CdlE1, double CdlE2, double CdlE3,double omega,double v,double alpha ,double E_start, double E_reverse, double delta_E, double Ru, double dt, double time_end, int time_length, double E0_mean=0, double k0_mean=0, double E0_sigma=0.1, double k0_sigma=1) {	
 	param1 single_e_param;
 	single_e_param.v=v;
 	single_e_param.Ru=Ru;
@@ -237,9 +243,9 @@ py::object I_tot_solver(double Cdl, double CdlE1, double CdlE2, double CdlE3,dou
 	single_e_param.k0_mean=k0_mean;
 	single_e_param.E0_sigma=E0_sigma;//
 	single_e_param.k0_sigma=k0_sigma;//
-	single_e_param.time_end=((single_e_param.E_reverse-single_e_param.E_start)/abs(single_e_param.v))*2;
-	single_e_param.dt=0.05*((2*boost::math::constants::pi<double>())/single_e_param.omega);//0.05
-	single_e_param.duration=single_e_param.time_end/single_e_param.dt;	
+	single_e_param.time_end=time_end;
+	single_e_param.dt=dt;
+	single_e_param.duration=time_length;	
 	single_e_param.tr=((single_e_param.E_reverse-single_e_param.E_start)/single_e_param.v);
 	//WEIGHT CALCULATIONS
 	int bins=16;
@@ -272,7 +278,18 @@ PYBIND11_MODULE(isolver, m) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(){ 
-
+	//std::vector<double>I_disp(800,0);
+	//I_disp=I_tot_solver(0.000133878548046, 0.000653657774506,0.000245772700637,1.10053945995e-06,boost::math::constants::pi<double>()*2,0,0,0.1,1,40,800);
+	
+	//clock_t t;
+	//t = clock();
+	//I_matrix=non_linear_I_solver(single_e_pa);	 
+	//for(int i=0; i<800; i++){
+	//	std::cout<<I_disp[i] << "\n";
+	//}
+	//t= clock() - t;
+	//std::cout<<(t*1.0/CLOCKS_PER_SEC)<<"\n";	//
+	
 	
 }
 	
