@@ -48,7 +48,7 @@ class single_E:
 		self.E_reverse=self.E_reverse/self.E_0
 		self.dE=self.dE/self.E_0
 		return parameters
-	
+
 
 	def times(self):
 		final_time=(self.E_reverse-self.E_start)*2
@@ -57,14 +57,14 @@ class single_E:
 		#Parameters 1-4= Cdl, Cdl1, Cdl2, Cdl3, omega
 		output=isolver.I_tot_solver(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4],self.v, self.alpha, self.E_start, self.E_reverse, self.dE, self.Ru, self.E0_mean, self.k0_mean, self.E0_sigma, 1)
 		output=np.array(output)
-		final_time=(self.E_reverse-self.E_start)*2
-		time=np.linspace(0,final_time,len(output), dtype='double')
-		plt.plot(time,output)
-		plt.xlabel('time')
-		plt.ylabel('Itot')
-		plt.show()
+		##final_time=(self.E_reverse-self.E_start)*2
+		##time=np.linspace(0,final_time,len(output), dtype='double')
+		##plt.plot(time,output)
+		##plt.xlabel('time')
+		##plt.ylabel('Itot')
+		##plt.show()
 		return output
-	
-	
+
+
 
 

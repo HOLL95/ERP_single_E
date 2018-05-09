@@ -20,4 +20,12 @@ output=x.simulate(capacative_parameters, time)
 
 
 
+E_0, T_0,I_0 = x.characteristic_val()
+exp_data = np.loadtxt('HypD_9Hz_cv_current',skiprows=19)
+exp_t = exp_data[:,0]/T_0
+exp_I = exp_data[:,1]/I_0
+
+plt.plot(exp_t,exp_I,label='data')
+plt.plot(time,output,label='sim')
+plt.show()
 
